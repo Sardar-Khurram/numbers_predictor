@@ -38,7 +38,7 @@ app.post('/api/predict', async (req, res) => {
     }
 
     // Call the Python backend
-    const response = await axios.post('http://localhost:5000/predict', { image });
+    const response = await axios.post(`${import.meta.env.VITE_MODEL_URL}/predict`, { image });
     const prediction = response.data.prediction;
 
     console.log('Received image:', image); // Log the image array for debugging
