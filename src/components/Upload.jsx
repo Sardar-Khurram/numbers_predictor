@@ -20,31 +20,78 @@ const Upload = () => {
   // Predict the number in the uploaded image
   const predictNumber = async () => {
     if (!image) return;
-  
+
     setIsLoading(true);
-  
-    try {
-      // Send the image to the backend for prediction
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/predict`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ image }), // Send the base64 image
-      });
-  
-      if (!response.ok) {
-        throw new Error("Prediction failed");
+
+    // Create an image object
+    const img = new Image();
+    img.src = image;
+
+    // Wait for the image to load
+    img.onload = async () => {
+      // Create a temporary canvas to resize the image
+      const tempCanvas = document.createElement("canvas");
+      const tempCtx = tempCanvas.getContext("2d");
+
+      // Set the temporary canvas size to 28x28
+      tempCanvas.width = 28;
+      tempCanvas.height = 28;
+
+      // Clear the temporary canvas with a white background
+      tempCtx.fillStyle = "white";
+      tempCtx.fillRect(0, 0, 28, 28);
+
+      // Draw the image onto the temporary canvas (resize to 28x28)
+      tempCtx.drawImage(img, 0, 0, 28, 28);
+
+      // Get the pixel data from the resized image
+      const imageData = tempCtx.getImageData(0, 0, 28, 28);
+      const data = imageData.data;
+
+      // Convert to grayscale, normalize, and round
+      const flattenedImage = [];
+      for (let i = 0; i < data.length; i += 4) {
+        // Extract RGB values
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+
+        // Convert to grayscale (using luminance formula)
+        const grayscale = 0.299 * r + 0.587 * g + 0.114 * b;
+
+        // Normalize to 0-255, invert, and round to the nearest integer
+        const normalized = Math.round(255 - grayscale); // Round to integer
+        flattenedImage.push(normalized);
       }
-  
-      const data = await response.json();
-      setPrediction(data.prediction); // Set the prediction result
-    } catch (error) {
-      console.error("Error:", error);
-      setPrediction("Failed to predict. Please try again.");
-    } finally {
-      setIsLoading(false); // Reset loading state
-    }
+
+      console.log(flattenedImage); // Log the flattened image for debugging
+
+      // Send the flattened image to the backend
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/predict`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ image: flattenedImage }), // Send the flattened image
+        });
+
+        if (!response.ok) throw new Error("Prediction failed");
+        const data = await response.json();
+        setPrediction(data.prediction); // Set the prediction result
+      } catch (error) {
+        console.error("Error:", error);
+        setPrediction("Failed to predict. Please try again.");
+      } finally {
+        setIsLoading(false); // Reset loading state
+      }
+    };
+  };
+
+  // Clear the image and prediction
+  const clearImage = () => {
+    setImage(null);
+    setPrediction(null); // Clear the prediction result
   };
 
   return (
@@ -83,7 +130,7 @@ const Upload = () => {
       {/* Buttons */}
       <div className="mt-6 flex space-x-4">
         <button
-          onClick={() => setImage(null)}
+          onClick={clearImage}
           className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600"
         >
           Clear
