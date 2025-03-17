@@ -1,10 +1,14 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import axios from 'axios'; // Use axios to call the Python backend
+import axios from 'axios';
+import dotenv from 'dotenv';
+
+dotenv.config(); // Load environment variables from .env
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
+const flaskURL = process.env.VITE_FLASK_URL || 'http://127.0.0.1:5000';
 
 // Middleware to parse JSON requests
 app.use(bodyParser.json());
@@ -17,7 +21,7 @@ app.get('/', (req, res) => {
 
 // Route to handle prediction requests
 app.post('/api/predict', async (req, res) => {
-  const { image } = req.body; // Expecting a flattened array of 784 values
+  const { image } = req.body;
 
   // Validate input data
   if (!image || !Array.isArray(image) || image.length !== 784) {
@@ -38,16 +42,16 @@ app.post('/api/predict', async (req, res) => {
     }
 
     // Call the Python backend
-    const response = await axios.post('http://localhost:5000/predict', { image });
+    const response = await axios.post(`${flaskURL}/predict`, { image });
     const prediction = response.data.prediction;
 
-    console.log('Received image:', image); // Log the image array for debugging
-    console.log('Prediction:', prediction); // Log the prediction for debugging
+    console.log('Received image:', image);
+    console.log('Prediction:', prediction);
 
     res.json({
       success: true,
       message: 'Image received successfully!',
-      prediction: prediction, // Return the actual prediction
+      prediction: prediction,
     });
   } catch (error) {
     console.error('Error during prediction:', error);
