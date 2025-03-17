@@ -4,7 +4,8 @@ import joblib
 app = Flask(__name__)
 
 # Load the model
-model = joblib.load('numbers_predictor\\backend\\best_mlp_model.pkl')
+model = joblib.load('D:\\Projects\\numbers_predictor\\backend\\best_mlp_model.pkl')
+
 
 @app.route('/predict', methods=['POST'])
 def predict():
