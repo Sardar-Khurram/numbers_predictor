@@ -119,10 +119,10 @@ const Editor = () => {
         const normalized = Math.round(255 - grayscale); // Round to integer
         flattenedImage.push(normalized);
       }
-
-      console.log(flattenedImage); // Log the flattened image for debugging
   
-
+      console.log("Flattened image length:", flattenedImage.length); // Debugging
+      console.log("Flattened image:", flattenedImage); // Debugging
+  
       // Step 6: Send the flattened image to the backend
       setIsLoading(true);
       try {
@@ -134,8 +134,12 @@ const Editor = () => {
           body: JSON.stringify({ image: flattenedImage }), // Send the flattened image
         });
   
+        console.log("Response status:", response.status); // Debugging
+        console.log("Response headers:", response.headers); // Debugging
+  
         if (!response.ok) throw new Error("Prediction failed");
         const data = await response.json();
+        console.log("Prediction data:", data); // Debugging
         setPrediction(data.prediction); // Set the prediction result
       } catch (error) {
         console.error("Error:", error);

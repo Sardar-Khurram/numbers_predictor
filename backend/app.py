@@ -1,18 +1,24 @@
 from flask import Flask, request, jsonify
 import joblib
 import os
-from flask_cors import CORS  # To allow frontend requests
+from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend communication
 
-# Load the model (relative path inside backend folder)
+# ✅ Allow only your frontend URL
+CORS(app, resources={r"/api/*": {"origins": "https://numbers-predictor.vercel.app"}})
+
+# Load the model
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "best_mlp_model.pkl")
 model = joblib.load(MODEL_PATH)
 
 @app.route("/", methods=["GET"])
 def home():
     return "Flask Backend is Running!"
+
+@app.route("/api/predict", methods=["OPTIONS"])
+def handle_options():
+    return jsonify({"message": "Preflight request handled"}), 200
 
 @app.route("/api/predict", methods=["POST"])
 def predict():
